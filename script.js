@@ -250,19 +250,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Smooth Scrolling Function
-    function setupSmoothScrolling() {
-        const navLinks = document.querySelectorAll('a[href^="#"]');
-        const serviceButtons = document.querySelectorAll('.btn[href^="#"]');
+    // Intersection Observer for Animated Sections
+    function setupIntersectionObserver() {
+        const sections = document.querySelectorAll('.terms-section, .policy-section');
         
-        // Combine nav links and service buttons
-        const scrollLinks = [...navLinks, ...serviceButtons];
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
 
-        scrollLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        sections.forEach(section => {
+            observer.observe(section);
+        });
+    }
+
+    // Smooth Scroll to Anchor Links
+    function setupSmoothScrollingToAnchors() {
+        const anchorLinks = document.querySelectorAll('a[href^="#"]');
+        
+        anchorLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
                 e.preventDefault();
-                
-                const targetId = this.getAttribute('href');
+                const targetId = link.getAttribute('href');
                 const targetElement = document.querySelector(targetId);
                 
                 if (targetElement) {
@@ -275,69 +294,79 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Contact Form Handling
-    function setupContactForm() {
+    // Mobile Navigation Toggle
+    function setupMobileNavigationToggle() {
+        const navMenu = document.querySelector('.nav-menu');
+        const menuToggle = document.querySelector('.menu-toggle');
+        
+        navMenu.classList.toggle('active');
+        menuToggle.classList.toggle('active');
+    }
+
+    // Form Validation
+    function setupFormValidationHelper() {
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const requiredFields = form.querySelectorAll('[required]');
+                let isValid = true;
+
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        field.classList.add('error');
+                        isValid = false;
+                    } else {
+                        field.classList.remove('error');
+                    }
+                });
+
+                if (!isValid) {
+                    e.preventDefault();
+                    const firstInvalidField = form.querySelector('.error');
+                    firstInvalidField.focus();
+                }
+            });
+        });
+    }
+
+    // Contact Form Submission
+    function setupContactFormSubmission() {
         const contactForm = document.getElementById('contact-form');
         
         if (contactForm) {
-            contactForm.addEventListener('submit', function(e) {
+            contactForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 
-                // Basic form validation
-                const name = document.getElementById('name');
-                const email = document.getElementById('email');
-                const message = document.getElementById('message');
-                
-                // Reset previous error states
-                [name, email, message].forEach(field => {
-                    field.classList.remove('error');
-                });
-                
-                // Validate fields
-                let isValid = true;
-                
-                if (name.value.trim() === '') {
-                    name.classList.add('error');
-                    isValid = false;
-                }
-                
-                if (email.value.trim() === '' || !isValidEmail(email.value)) {
-                    email.classList.add('error');
-                    isValid = false;
-                }
-                
-                if (message.value.trim() === '') {
-                    message.classList.add('error');
-                    isValid = false;
-                }
-                
-                // If form is valid, submit or show success
-                if (isValid) {
-                    showSuccessNotification('Thank you for your message! We will get back to you soon.');
+                if (validateForm(contactForm)) {
+                    // Here you would typically send form data to a server
+                    alert('Form submitted successfully!');
                     contactForm.reset();
                 }
             });
         }
     }
 
-    // Email validation helper function
-    function isValidEmail(email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    }
+    // Lazy Loading for Images
+    function setupLazyLoading() {
+        const lazyImages = document.querySelectorAll('img[data-src]');
+        
+        const lazyLoadOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px 50px 0px'
+        };
 
-    // Success Notification
-    function showSuccessNotification(message) {
-        const notification = document.createElement('div');
-        notification.classList.add('success-notification');
-        notification.textContent = message;
-        
-        document.body.appendChild(notification);
-        
-        // Remove notification after 3 seconds
-        setTimeout(() => {
-            document.body.removeChild(notification);
-        }, 3000);
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    img.classList.add('loaded');
+                    observer.unobserve(img);
+                }
+            });
+        }, lazyLoadOptions);
+
+        lazyImages.forEach(img => imageObserver.observe(img));
     }
 
     // Initialize all functions
@@ -349,6 +378,12 @@ document.addEventListener('DOMContentLoaded', () => {
         setupTestimonialSlider();
         setupClientsBannerInteraction();
         setupSmoothScrolling();
+        setupIntersectionObserver();
+        setupSmoothScrollingToAnchors();
+        setupMobileNavigationToggle();
+        setupFormValidationHelper();
+        setupContactFormSubmission();
+        setupLazyLoading();
 
         // Check if we're on specific pages
         if (document.body.classList.contains('about-page')) {
@@ -362,4 +397,167 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Run initialization
     init();
+});
+
+// Email validation helper function
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+// Success Notification
+function showSuccessNotification(message) {
+    const notification = document.createElement('div');
+    notification.classList.add('success-notification');
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Remove notification after 3 seconds
+    setTimeout(() => {
+        document.body.removeChild(notification);
+    }, 3000);
+}
+
+// Responsive Image Lazy Loading
+function setupResponsiveLazyLoading() {
+    const lazyImages = document.querySelectorAll('img[data-src]');
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src;
+                img.classList.add('loaded');
+                observer.unobserve(img);
+            }
+        });
+    }, {
+        rootMargin: '0px 0px 50px 0px'
+    });
+
+    lazyImages.forEach(img => imageObserver.observe(img));
+}
+
+// Touch Device Detection and Optimization
+function setupTouchDeviceOptimization() {
+    function isTouchDevice() {
+        return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    }
+
+    if (isTouchDevice()) {
+        document.body.classList.add('touch-device');
+        
+        // Enhance tap targets
+        const tapTargets = document.querySelectorAll('.btn, .nav-link, .client-card');
+        tapTargets.forEach(target => {
+            target.style.minHeight = '44px';
+            target.style.minWidth = '44px';
+        });
+    }
+}
+
+// Responsive Scroll Behavior
+function setupResponsiveScrolling() {
+    const smoothScrollLinks = document.querySelectorAll('a[href^="#"]');
+    smoothScrollLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = link.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+            
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+}
+
+// Responsive Form Validation
+function setupResponsiveFormValidation() {
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const requiredFields = form.querySelectorAll('[required]');
+            let isValid = true;
+
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('invalid');
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+                const firstInvalidField = form.querySelector('.invalid');
+                firstInvalidField.focus();
+            }
+        });
+    });
+}
+
+// Terms and Conditions Page Animations
+function initTermsAndConditionsAnimations() {
+    const sections = document.querySelectorAll('.terms-section');
+    
+    const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+
+    sections.forEach(section => {
+        observer.observe(section);
+    });
+}
+
+// Privacy Policy Page Animations
+function initPrivacyPolicyAnimations() {
+    const sections = document.querySelectorAll('.policy-section');
+    
+    const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+
+    sections.forEach(section => {
+        observer.observe(section);
+    });
+}
+
+// Initialize page-specific animations when the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+    // Check for Terms and Conditions page
+    if (document.querySelector('.terms-container')) {
+        initTermsAndConditionsAnimations();
+    }
+
+    // Check for Privacy Policy page
+    if (document.querySelector('.privacy-policy-container')) {
+        initPrivacyPolicyAnimations();
+    }
 });
